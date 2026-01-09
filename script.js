@@ -1,75 +1,96 @@
-body, html {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    background: #1a1a2e;
-    font-family: sans-serif;
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+// -------- Circle class --------
+class Circle {
+    constructor(x, y, radius, number, color) {
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+        this.number = number;
+        this.color = color;
+
+        this.dx = Math.random() * 4 - 2;
+        this.dy = Math.random() * 4 - 2;
+        this.moving = true;
+    }
+
+    draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        ctx.closePath();
+
+        ctx.fillStyle = "white";
+        ctx.font = "20px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(this.number, this.x, this.y);
+    }
+
+    move() {
+        if (!this.moving) return;
+
+        this.x += this.dx;
+        this.y += this.dy;
+
+        // պատերի բախում
+        if (this.x - this.radius < 0 || this.x + this.radius > canvas.width) {
+            this.dx *= -1;
+        }
+        if (this.y - this.radius < 0 || this.y + this.radius > canvas.height) {
+            this.dy *= -1;
+        }
+    }
+
+    isClicked(mx, my) {
+        const dist = Math.hypot(mx - this.x, my - this.y);
+        return dist < this.radius;
+    }
 }
 
-#calculator-header {
-    position: absolute;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 10px;
-    z-index: 100;
-    background: rgba(255, 255, 255, 0.1);
-    padding: 10px;
-    border-radius: 15px;
-    backdrop-filter: blur(5px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+// -------- Create circles --------
+const circles = [];
+
+for (let i = 1; i <= 10; i++) {
+    circles.push(
+        new Circle(
+            Math.random() * canvas.width,
+            Math.random() * canvas.height,
+            30,
+            i,
+            `hsl(${Math.random() * 360}, 70%, 50%)`
+        )
+    );
 }
 
-#display {
-    min-width: 200px;
-    padding: 10px 20px;
-    background: #000;
-    color: #00ff88;
-    font-size: 24px;
-    border-radius: 10px;
-    text-align: right;
+// -------- Mouse click --------
+canvas.addEventListener("click", (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+
+    circles.forEach(circle => {
+        if (circle.isClicked(mx, my)) {
+            circle.moving = !circle.moving; // կանգ / շարժ
+        }
+    });
+});
+
+// -------- Animation loop --------
+function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    circles.forEach(circle => {
+        circle.move();
+        circle.draw();
+    });
+
+    requestAnimationFrame(animate);
 }
 
-#equal-btn {
-    padding: 0 25px;
-    background: #ff4757;
-    color: white;
-    border: none;
-    border-radius: 10px;
-    font-size: 28px;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-#equal-btn:hover {
-    background: #ff6b81;
-    transform: scale(1.05);
-}
-
-.bubble {
-    position: absolute;
-    width: 60px;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: bold;
-    font-size: 20px;
-    cursor: pointer;
-    user-select: none;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    transition: opacity 0.3s, transform 0.1s;
-}
-
-.number-style {
-    border-radius: 50%;
-    background: #34495e;
-}
-
-.operator-style {
-    border-radius: 10px;
-}
+animate();
